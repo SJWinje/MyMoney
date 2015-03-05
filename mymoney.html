@@ -1,0 +1,101 @@
+<head>
+  <title>My Money</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+</head>
+<!--
+<body>
+  {{> Nav}}
+
+  <h1>Welcome to Meteor!</h1>
+
+  {{> hello}}
+</body>
+-->
+<template name="hello">
+  <button>Click Me</button>
+  <p>You've pressed the button {{counter}} times.</p>
+</template>
+
+<template name="Home">
+  {{> Nav}}
+
+  <h1>Home</h1>
+
+  <p>
+    {{title}}
+  </p>
+</template>
+
+<template name="Accounts">
+  {{> Nav}}
+
+  <h1>Accounts</h1>
+</template>
+
+<template name="Profile">
+  {{> Nav}}
+
+  <h1>User Profile</h1>
+</template>
+
+<template name="Allocations">
+  {{> Nav}}
+
+  <h1>Sub-Accounts and Percent Allocations</h1>
+</template>
+
+<template name="Recurring">
+  {{> Nav}}
+
+  <h1>Recurring Transations</h1>
+</template>
+
+<template name="Admin">
+  {{> Nav}}
+
+  <h1>Administrative Settings</h1>
+</template>
+
+<template name="About">
+  {{> Nav}}
+
+  <h1>My Money</h1>
+  <p>This application was created to enable parents to keep track of the allowance owed to each of their children.</p>
+  <p>And to help children learn how to manage their money wisely.</p>
+</template>
+
+<template name="Nav">
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">My Money</a>
+      </div>
+      <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav">
+          <li><a href="#"><span class="glyphicon glyphicon-user"></span> {{> loginButtons}}</a></li>
+          <li><a href="{{pathFor 'accounts'}}">Accounts</a></li>
+          <li><a href="{{pathFor 'profile'}}">User Profile</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="{{pathFor 'about'}}">About</a></li>
+          <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">Settings <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="{{pathFor 'allocations'}}">Allocations</a></li>
+              <li><a href="{{pathFor 'recurring'}}">Recurring Transactions</a></li>
+              <li><a href="{{pathFor 'admin'}}">Admin Settings</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+</template>
