@@ -11,5 +11,3 @@ twbs:bootstrap
 iron:router
 accounts-password
 accounts-ui
-accounts-twitter
-accounts-facebook
