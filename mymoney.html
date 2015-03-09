@@ -3,6 +3,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="//code.jquery.com/ui/1.11.3/jquery-ui.js"></script>
+  <script>
+  $(function() {
+    $( "#datepicker" ).datepicker();
+  });
+  </script>
 </head>
 <!--
 <body>
@@ -35,9 +44,10 @@
   {{> showAccounts}}
 
   {{#if showSelectedUser}}
-  <h2>Selected User: {{showSelectedUser.userName}}</h2>
-  <input type="button" class="btn btn-success credit" value="Credit">
-  <input type="button" class="btn btn-danger debit" value="Debit">
+    <h2>Selected User: {{showSelectedUser.userName}}</h2>
+    {{> creditDebit}}
+
+    {{> transactions}}
   {{/if}}
 
 </template>
@@ -46,6 +56,7 @@
   {{> Nav}}
 
   <h1>User Profile</h1>
+
 </template>
 
 <template name="About">
@@ -83,17 +94,25 @@
 <template name="showAccounts">
   <ul>
   {{#each user}}
-    <li class="user {{selectedUser}}">{{userName}} - {{type}} account Balance: {{balance}}
-      <button class="remove">&times;</button>
+    <li class="user {{selectedUser}}">{{userName}} - {{type}} account Balance: {{userBalance}}
+      {{#if onAdminPage}}<button class="remove btn btn-danger">Remove</button>{{/if}}
+    </li>
+  {{/each}}
+  </ul>
+</template>
+
+<template name="transactions">
+  <h2>Transactions</h2>
+  <ul>
+  {{#each transaction}}
+    <li class="transaction">{{date}} ${{amount}} {{description}}
+      <button class="void btn btn-warning">Void</button>
     </li>
   {{/each}}
   </ul>
 </template>
 
 <template name="addChild">
-
-  <button>Click Me</button>
-  <p>You've pressed the button {{counter}} times.</p>
 
   <div class="container">
 
@@ -112,15 +131,49 @@
           <input type="text" class="form-control" id="password" name="userPassword" placeholder="Password">
         </div>
       </div>
+      <!--
       <div class="form-group">
         <label class="control-label col-sm-2" for="balance">Initial Balance:</label>
         <div class="col-sm-10">
           <input type="number" class="form-control" id="balance" name="userBalance" placeholder="0">
         </div>
       </div>
+      -->
       <div class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
           <button type="submit" class="btn btn-primary">Add Child</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</template>
+
+<template name="creditDebit">
+  <div class="container">
+    <h2>Add Credit or Debit</h2>
+    <form class="form-horizontal" role="form">
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="date">Date:</label>
+        <div class="col-sm-10">
+<!--          <input type="date" class="form-control" id="date" name="date" placeholder="Today"> -->
+          <input type="text" class="form-control" id="datepicker" name="datepicker">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="amount">Amount:</label>
+        <div class="col-sm-10">
+          <input type="number" class="form-control" id="amount" name="amount" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2" for="descr">Description:</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="descr" name="descr" placeholder="Description">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+          <button type="submit" class="btn btn-primary">Submit</button>
         </div>
       </div>
     </form>
@@ -158,5 +211,4 @@
       </div>
     </div>
   </nav>
-
 </template>
