@@ -11,3 +11,4 @@ twbs:bootstrap
 iron:router
 accounts-password
 accounts-ui
+aslagle:reactive-table

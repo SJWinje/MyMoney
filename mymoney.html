@@ -30,11 +30,14 @@
 <template name="Home">
   {{> Nav}}
 
-  <h1>Home</h1>
+  <div class="jumbotron">
+    <div class="container">
+      <h1>My Money</h1>
+      <p>Keeping track of allowance and expenses.</p>
+      <a href="{{pathFor 'admin'}}">Configure Accounts</a>
+    </div>
+  </div>
 
-  <p>
-    {{title}}
-  </p>
 </template>
 
 <template name="Accounts">
@@ -94,8 +97,9 @@
 <template name="showAccounts">
   <ul>
   {{#each user}}
-    <li class="user {{selectedUser}}">{{userName}} - {{type}} account Balance: {{userBalance}}
+    <li class="user {{selectedUser}}">
       {{#if onAdminPage}}<button class="remove btn btn-danger">Remove</button>{{/if}}
+      {{userName}}: <strong>{{type}}</strong> Balance=${{userBalance}}
     </li>
   {{/each}}
   </ul>
@@ -103,10 +107,28 @@
 
 <template name="transactions">
   <h2>Transactions</h2>
+  <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
+      Options<span class="caret"></span></button>
+      <ul class="dropdown-menu" role="menu">
+        {{#if enableVoid}}
+        <li class="toggleEnableVoid"><a href="#">Disable Void</a></li>
+        {{else}}
+        <li class="toggleEnableVoid"><a href="#">Enable Void</a></li>
+        {{/if}}
+        {{#if showVoided}}
+        <li class="toggleShowVoided"><a href="#">Hide Voided</a></li>
+        {{else}}
+        <li class="toggleShowVoided"><a href="#">Show Voided</a></li>
+        {{/if}}
+      </ul>
+  </div>
+
   <ul>
   {{#each transaction}}
-    <li class="transaction">{{date}} ${{amount}} {{description}}
-      <button class="void btn btn-warning">Void</button>
+    <li class="transaction">
+      {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
+      {{date}} ${{amount}} {{description}}
     </li>
   {{/each}}
   </ul>
@@ -151,7 +173,7 @@
 <template name="creditDebit">
   <div class="container">
     <h2>Add Credit or Debit</h2>
-    <form class="form-horizontal" role="form">
+    <form class="form-horizontal" role="form" method="post">
       <div class="form-group">
         <label class="control-label col-sm-2" for="date">Date:</label>
         <div class="col-sm-10">
