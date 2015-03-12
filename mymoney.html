@@ -124,14 +124,34 @@
       </ul>
   </div>
 
-  <ul>
-  {{#each transaction}}
-    <li class="transaction">
-      {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
-      {{date}} ${{amount}} {{description}}
-    </li>
-  {{/each}}
-  </ul>
+  <div id="table">
+    {{> reactiveTable collection=transactions settings=tableSettings}}
+  </div>
+  <div class="transactions">
+    {{#each transactions}}
+<!--      {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
+      {{> trans}}-->
+    {{/each}}
+    <!--
+    <ul>
+      {{#each transactions}}
+      <li class="transaction">
+        {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
+        {{date}} ${{amount}} {{description}}
+      </li>
+      {{/each}}
+    </ul>
+  -->
+  </div>
+</template>
+
+<template name="trans">
+  <div class="trans">
+    {{#if enableVoid}}<span> <button class="void btn btn-warning">Void</button></span>{{/if}}
+    <span class="date">{{date}}</span>
+    <span class="amount">${{amount}}</span>
+    <span class="description">{{description}}</span>
+  </div>
 </template>
 
 <template name="addChild">

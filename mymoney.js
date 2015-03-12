@@ -319,7 +319,7 @@ if (Meteor.isClient) {
   });
 
   Template.transactions.helpers({
-    transaction: function() {
+    transactions: function() {
       var selectedUser = Session.get('selectedUser');
       if (Session.get('showVoided')) {
         return TransactionList.find({user: selectedUser}, {sort: {date: 1}});
@@ -333,7 +333,16 @@ if (Meteor.isClient) {
     },
     showVoided: function() {
       return Session.get('showVoided');
-    }
+    },
+    tableSettings : function () {
+      return {
+          fields: [
+            { key: 'date', label: 'Date', cellClass: 'col-md-1' },
+            { key: 'amount', label: 'Amount', cellClass: 'col-md-1' },
+            { key: 'description', label: 'Description', cellClass: 'col-md-10' }
+          ]
+      };
+    },
   });
 
   Accounts.ui.config({
@@ -358,6 +367,7 @@ Router.route('/accounts', function () {
 Router.route('/accounts/:_id', function () {
   Session.set('onAdminPage', false);
   this.render('Accounts');
+// http://meteortips.com/tutorial/iron-router-part-2/
 //  var account = AccountList.findOne({_id: this.params._id});
 //  this.render('ShowAccount', {data: account});
 });
