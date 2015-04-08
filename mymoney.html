@@ -161,6 +161,7 @@
 
 <template name="transactions">
   <h2>Transactions</h2>
+  <!--
   <div class="btn-group">
       <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
       Options<span class="caret"></span></button>
@@ -177,14 +178,16 @@
         {{/if}}
       </ul>
   </div>
-
+  -->
   <div id="table">
     {{> reactiveTable collection=transactions settings=tableSettings}}
   </div>
   <div class="transactions">
     {{#each transactions}}
-<!--      {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
-      {{> trans}}-->
+      <!--
+      {{#if enableVoid}}<button class="void btn btn-warning">Void</button>{{/if}}
+      {{> trans}}
+      -->
     {{/each}}
     <!--
     <ul>
@@ -195,13 +198,15 @@
       </li>
       {{/each}}
     </ul>
-  -->
+    -->
   </div>
 </template>
 
 <template name="trans">
   <div class="trans">
+    <!--
     {{#if enableVoid}}<span> <button class="void btn btn-warning">Void</button></span>{{/if}}
+    -->
     <span class="date">{{date}}</span>
     <span class="amount">${{amount}}</span>
     <span class="description">{{description}}</span>

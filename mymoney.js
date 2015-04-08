@@ -23,9 +23,10 @@ if (Meteor.isServer) {
 //      accountId = Meteor.call('addAccount', userId, "Savings");
       Meteor.call('creditOrDebitAccount', ids.accountId, 627, "Initial Balance", "02/01/2015");
       Meteor.call('creditOrDebitAccount', ids.accountId, -30, "Cell Phone", "02/01/2015");
-      var transactionIdToVoid = Meteor.call('creditOrDebitAccount', ids.accountId, -25, "PC Game", "02/15/2015");
+      //var transactionIdToVoid =
+        Meteor.call('creditOrDebitAccount', ids.accountId, -25, "PC Game", "02/15/2015");
       Meteor.call('creditOrDebitAccount', ids.accountId, -30, "Cell Phone", "03/01/2015");
-      Meteor.call('voidTransaction', ids.accountId, 25, transactionIdToVoid);
+      //Meteor.call('voidTransaction', ids.accountId, 25, transactionIdToVoid);
 
       ids = Meteor.call('addUser', {username :"Victoria", password:"123456"}, "Savings");
 //      accountId = Meteor.call('addAccount', userId, "Savings");
@@ -134,6 +135,7 @@ if (Meteor.isServer) {
       );
       return transactionId;
     },
+    /*
     // Only called when voiding a transaction
     'voidTransaction': function(selectedAccount, amount, transactionId) {
       // Update balance by the voided amount
@@ -180,6 +182,7 @@ if (Meteor.isServer) {
         }
       );
     },
+    */
     'removeTransaction': function(transactionId) {
       TransactionList.remove(transactionId);
 //      Accounts.remove(user);
@@ -191,8 +194,8 @@ if (Meteor.isClient) {
   // counter starts at 0
   Session.setDefault('counter', 0);
   Session.set('onAdminPage', false);
-  Session.set('enableVoid', false);
-  Session.set('showVoided', false);
+  //Session.set('enableVoid', false);
+  //Session.set('showVoided', false);
 
   //
   // QuickSetup Template helpers and events
@@ -493,10 +496,12 @@ if (Meteor.isClient) {
       var selectedAccount = Session.get('selectedAccount');
       var user_id = AccountList.findOne(selectedAccount).user_id;
       var user = Meteor.users.findOne({_id: user_id});
-      console.log("1.Accounts userName selectedAccount: " + selectedAccount);
-      console.log("2.Accounts userName user_id: " + user_id);
-      console.log("3.Accounts userName: " + user.username);
-      return user.username;
+      //console.log("1.Accounts userName selectedAccount: " + selectedAccount);
+      //console.log("2.Accounts userName user_id: " + user_id);
+      //console.log("3.Accounts userName: " + user.username);
+      if (user) {
+        return user.username;
+      }
     },
   });
 
@@ -507,6 +512,7 @@ if (Meteor.isClient) {
   // transactions Template helpers and events
   //
   Template.transactions.events({
+    /*
     'click .void': function(){
       var transactionId = this._id;
 
@@ -528,10 +534,11 @@ if (Meteor.isClient) {
     'click .toggleShowVoided': function(){
       Session.set('showVoided', !Session.get('showVoided'));
     },
+    */
     'click .reactive-table tr': function(event) {
       var transaction = this;
       event.preventDefault();
-      console.log("Selected row: " + transaction._id);
+      //console.log("Selected row: " + transaction._id);
     },
   });
 
@@ -539,20 +546,23 @@ if (Meteor.isClient) {
     transactions: function() {
       var selectedAccount = Session.get('selectedAccount');
       //console.log("transactions accountId: " + selectedAccount);
-      if (Session.get('showVoided')) {
+      //if (Session.get('showVoided')) {
         return TransactionList.find({account_id: selectedAccount}, {sort: {date: 1}});
-      }
-      else {
-        return TransactionList.find({account_id: selectedAccount, void: {$ne: true}}, {sort: {date: 1}});
-      }
+      //}
+      //else {
+      //  return TransactionList.find({account_id: selectedAccount, void: {$ne: true}}, {sort: {date: 1}});
+      //}
     },
+    /*
     enableVoid: function() {
       return Session.get('enableVoid');
     },
     showVoided: function() {
       return Session.get('showVoided');
     },
+    */
     tableSettings : function () {
+      /*
       if (Session.get('enableVoid')) {
         return {
             fields: [
@@ -567,6 +577,7 @@ if (Meteor.isClient) {
         };
       }
       else {
+      */
         return {
             fields: [
               { key: 'date', label: 'Date', cellClass: 'col-md-1' },
@@ -574,7 +585,7 @@ if (Meteor.isClient) {
               { key: 'description', label: 'Description', cellClass: 'col-md-10' }
             ]
         };
-      }
+      //}
     },
   });
 
