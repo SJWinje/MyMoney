@@ -1,4 +1,5 @@
-AccountList = new Mongo.Collection('accounts');
+BankList        = new Mongo.Collection('banks');
+AccountList     = new Mongo.Collection('accounts');
 TransactionList = new Mongo.Collection('transactions');
 
 if (Meteor.isServer) {
@@ -8,18 +9,26 @@ if (Meteor.isServer) {
     // Insert dummy test data
     if (AccountList.find().count() == 0) {
       console.log("Add initial test data to db");
-      var gId = Meteor.call('addUser', {username :"Gracelyn", password:"123456"}, "Savings");
-      Meteor.call('creditOrDebitAccount', gId, 1000, "Initial Balance", "02/01/2015");
-      Meteor.call('creditOrDebitAccount', gId, -30, "Cell Phone", "03/01/2015");
-      Meteor.call('creditOrDebitAccount', gId, 60, "Grades", "03/09/2015");
-      Meteor.call('creditOrDebitAccount', gId, 204, "Babysitting", "03/03/2015");
-      var cId = Meteor.call('addUser', {username :"Christian", password:"123456"}, "Savings");
-      Meteor.call('creditOrDebitAccount', cId, 627, "Initial Balance", "02/01/2015");
-      Meteor.call('creditOrDebitAccount', cId, -30, "Cell Phone", "02/01/2015");
-      var transactionIdToVoid = Meteor.call('creditOrDebitAccount', cId, -25, "PC Game", "02/15/2015");
-      Meteor.call('creditOrDebitAccount', cId, -30, "Cell Phone", "03/01/2015");
-      Meteor.call('voidTransaction', cId, 25, transactionIdToVoid);
-      var vId = Meteor.call('addUser', {username :"Victoria", password:"123456"}, "Savings");
+      var ids;
+      var accountId;
+
+      ids = Meteor.call('addUser', {username :"Gracelyn", password:"123456"}, "Savings");
+//      accountId = Meteor.call('addAccount', userId, "Savings");
+      Meteor.call('creditOrDebitAccount', ids.accountId, 1000, "Initial Balance", "02/01/2015");
+      Meteor.call('creditOrDebitAccount', ids.accountId, -30, "Cell Phone", "03/01/2015");
+      Meteor.call('creditOrDebitAccount', ids.accountId, 60, "Grades", "03/09/2015");
+      Meteor.call('creditOrDebitAccount', ids.accountId, 204, "Babysitting", "03/03/2015");
+
+      ids = Meteor.call('addUser', {username :"Christian", password:"123456"}, "Savings");
+//      accountId = Meteor.call('addAccount', userId, "Savings");
+      Meteor.call('creditOrDebitAccount', ids.accountId, 627, "Initial Balance", "02/01/2015");
+      Meteor.call('creditOrDebitAccount', ids.accountId, -30, "Cell Phone", "02/01/2015");
+      var transactionIdToVoid = Meteor.call('creditOrDebitAccount', ids.accountId, -25, "PC Game", "02/15/2015");
+      Meteor.call('creditOrDebitAccount', ids.accountId, -30, "Cell Phone", "03/01/2015");
+      Meteor.call('voidTransaction', ids.accountId, 25, transactionIdToVoid);
+
+      ids = Meteor.call('addUser', {username :"Victoria", password:"123456"}, "Savings");
+//      accountId = Meteor.call('addAccount', userId, "Savings");
     }
   });
 
@@ -27,50 +36,108 @@ if (Meteor.isServer) {
     'users': function(){
       return AccountList.find().fetch();
     },
+
     'getUser': function(userId){
       return AccountList.findOne(userId);
     },
+
+    'addBank': function(bank, adminIds, childIds) {
+      BankList.insert(
+        {
+          name: bank,
+          admins: adminIds,
+          users: childIds
+        }
+      );
+    },
     'addUser': function(options, type){
-      Accounts.createUser(options);
-      var userId = AccountList.insert({
-        userName: options.username,
+      var user_id = Accounts.createUser(options);
+      console.log("Meteor.addUser user_id: " + user_id);
+      var accountId = AccountList.insert({
+        user_id: user_id,
         type: type
       });
-      return userId;
+      console.log("Meteor.addUser accountId: " + accountId);
+      return {
+        userId: user_id,
+        accountId: accountId
+      };
     },
-    'removeUser': function(user) {
-      var userName = AccountList.findOne(user).userName;
-      AccountList.remove(user);
-      TransactionList.find({user: user}).forEach (
+    'addAccount': function(userId, type){
+      console.log("Meteor.addAccount userId: " + userId);
+      var accountId = AccountList.insert({
+        user_id: userId,
+        type: type
+      });
+      return accountId;
+    },
+    'removeUser': function(account) {
+      console.log("Remove account: " + account);
+      var user_id = AccountList.findOne(account).user_id;
+      AccountList.remove(account);
+      TransactionList.find({account_id: account}).forEach (
         function(transactionId) {
-          var amount = TransactionList.findOne(transactionId).amount;
-          //console.log("Remove trans id: " + transactionId + " for: " + userName + " by " + amount );
+          console.log("Remove trans id: " + transactionId._id);
           TransactionList.remove(transactionId);
         }
       );
-      var u = Meteor.users.findOne({username:userName});
-      Meteor.users.remove({_id:u._id});
+      console.log("Remove user: " + user_id);
+      Meteor.users.remove({_id: user_id});
     },
+    'quickSetup': function(bank, admin, adminPassword, child, defaultPassword) {
+      var type = "Savings";
+      var adminIds = [];
+      var childIds = [];
+
+      admin.forEach(function(a) {
+        a = a.trim();
+        var options = {
+          username: a,
+          password: adminPassword,
+          profile: {admin: true}
+        };
+        var ids = Meteor.call('addUser', options, "None");
+        // Admin users do not need accounts
+        //accountId = Meteor.call('addAccount', userId, "Savings");
+        adminIds.push(ids.userId);
+      });
+
+      child.forEach(function(c) {
+        c = c.trim();
+        var options = {
+          username: c,
+          password: defaultPassword
+        };
+        // TODO: figure out why this is not being called and returing a user_id
+        var ids = Meteor.call('addUser', options, "Savings");
+        console.log("quick addAccount for: " + c + " (" + ids.userId + ")");
+        //          accountId = Meteor.call('addAccount', userId, "Savings");
+        childIds.push(ids.userId);
+      });
+
+      Meteor.call('addBank', bank, adminIds, childIds);
+    },
+
 //    'getTransaction': function(transactionId){
 //      return TransactionList.findOne(transactionId);
 //    },
-    'creditOrDebitAccount': function(selectedUser, amount, descr, date) {
-      AccountList.update(selectedUser, {$inc: {balance: amount} });
+    'creditOrDebitAccount': function(selectedAccount, amount, descr, date) {
+      AccountList.update(selectedAccount, {$inc: {balance: amount} });
       var transactionId = TransactionList.insert(
         {
           date: date,
           amount: amount,
           subAccount: "Savings",
           description: descr,
-          user: selectedUser
+          account_id: selectedAccount
         }
       );
       return transactionId;
     },
     // Only called when voiding a transaction
-    'voidTransaction': function(selectedUser, amount, transactionId) {
+    'voidTransaction': function(selectedAccount, amount, transactionId) {
       // Update balance by the voided amount
-      AccountList.update(selectedUser, {$inc: {balance: amount} });
+      AccountList.update(selectedAccount, {$inc: {balance: amount} });
 
       // Get today's date
       var d = new Date();
@@ -89,7 +156,7 @@ if (Meteor.isServer) {
           date: today,
           amount: amount,
           subAccount: "Savings",
-          user: selectedUser,
+          account_id: selectedAccount,
           void: true
         }
       );
@@ -126,6 +193,116 @@ if (Meteor.isClient) {
   Session.set('onAdminPage', false);
   Session.set('enableVoid', false);
   Session.set('showVoided', false);
+
+  //
+  // QuickSetup Template helpers and events
+  //
+  Template.QuickSetup.events({
+    'submit form': function(e) {
+      var bank = e.target.bank.value;
+      var admins = e.target.admins.value;
+      var admin = admins.split(",");
+      var adminPassword = e.target.adminPassword.value;
+      var children = e.target.children.value;
+      var child = children.split(",");
+      var defaultPassword = e.target.defaultPassword.value;
+      var inputsOkay = true;
+
+      e.preventDefault();
+
+      if (bank == "") {
+        alert("Name of Bank required");
+        inputsOkay = false;
+      }
+      else if (admins == "") {
+        alert("Name(s) of Administrator(s) required");
+        inputsOkay = false;
+      }
+      else if ((adminPassword == "") || (adminPassword.length <6)) {
+        alert("Administrator Password is required and must be at least 6 characters");
+        inputsOkay = false;
+      }
+      else if (children == "") {
+        alert("Names of Children are required");
+        inputsOkay = false;
+      }
+      else if ((defaultPassword == "") || (defaultPassword.length <6)) {
+        alert("Default Password is required and must be at least 6 characters");
+        inputsOkay = false;
+      }
+      else {
+        console.log("Bank: " + bank);
+
+        admin.forEach(function(a) {
+          a = a.trim();
+          if (a.length < 3) {
+            alert("Administrator's names: \"" + a + "\" must be 3 or more characters");
+            inputsOkay = false;
+          }
+          else {
+            console.log("Admin: " + a + " Password:" + adminPassword);
+          }
+        });
+
+        child.forEach(function(c) {
+          c = c.trim();
+          if (c.length < 3) {
+            alert("Children's names: \"" + c + "\" must be 3 or more characters");
+            inputsOkay = false;
+          }
+          else {
+            console.log("Child: " + c + " Password:" + defaultPassword);
+          }
+        });
+      }
+
+      if (inputsOkay) {
+        console.log("All inputs okay");
+
+        Meteor.call('quickSetup', bank, admin, adminPassword, child, defaultPassword);
+        /*
+        var type = "Savings";
+        var adminIds = [];
+        var childIds = [];
+
+        admin.forEach(function(a) {
+          a = a.trim();
+          var options = {
+            username: a,
+            password: adminPassword,
+            profile: {admin: true}
+          };
+          var ids = Meteor.call('addUser', options, "None");
+          // Admin users do not need accounts
+          //accountId = Meteor.call('addAccount', userId, "Savings");
+          adminIds.push(ids.userId);
+        });
+
+        child.forEach(function(c) {
+          c = c.trim();
+          var options = {
+            username: c,
+            password: defaultPassword
+          };
+          // TODO: figure out why this is not being called and returing a user_id
+          var ids = Meteor.call('addUser', options, "Savings");
+          console.log("quick addAccount for: " + c + " (" + ids.userId + ")");
+//          accountId = Meteor.call('addAccount', userId, "Savings");
+          childIds.push(ids.userId);
+        });
+
+        Meteor.call('addBank', bank, adminIds, childIds);
+        */
+        /*
+        e.target.bank.value = null;
+        e.target.admins.value = null;
+        e.target.adminPassword.value = null;
+        e.target.children.value = null;
+        e.target.defaultPassword.value = null;
+        */
+      }
+    }
+  });
 
   Template.hello.helpers({
     counter: function () {
@@ -164,8 +341,16 @@ if (Meteor.isClient) {
         username: userName,
         password: userPassword
       };
-      var type = "savings";
-      Meteor.call('addUser', options, type);
+      var type = "Savings";
+      console.log("addChild: " + userName);
+      var ids = Meteor.call('addUser', options, type); /*, function(err, res) {
+        if (err) { console.log("Error");}
+        else {console.log("Result: " + res);}
+      });*/
+      // ids.userId and ids.accountId come back as undefined
+      //console.log("addChild returned userId: " + ids.userId);
+      //console.log("addChild returned accountId: " + ids.accountId);
+//      Meteor.call('addAccount', userId, type);
 
       e.target.userName.value = null;
       e.target.userPassword.value = null;
@@ -177,14 +362,14 @@ if (Meteor.isClient) {
   //
   Template.creditDebit.events({
     'submit form': function(e) {
-      var selectedUser = Session.get('selectedUser');
+      var selectedAccount = Session.get('selectedAccount');
       var descr = e.target.descr.value;
       var date = e.target.datepicker.value;
       var amount = Number(e.target.amount.value);
       var creditOrDebit = (amount<0) ? "Debit " : "Credit ";
       //console.log(creditOrDebit + AccountList.findOne(selectedUser).userName + "'s account by " + amount + ", " + descr + " on " + date );
 
-      Meteor.call('creditOrDebitAccount', selectedUser, amount, descr, date);
+      Meteor.call('creditOrDebitAccount', selectedAccount, amount, descr, date);
       e.target.amount.value = null;
       e.target.descr.value = null;
     },
@@ -206,16 +391,17 @@ if (Meteor.isClient) {
   //
   Template.Admin.events({
     'click .remove': function(){
-      var selectedUser = this._id;
-      //console.log("User: " + selectedUser + ", " + AccountList.findOne(selectedUser).userName);
-      if (confirm("Are you sure you want to remove user?")) {
-        Meteor.call('removeUser', selectedUser);
+      // TODO: fix this
+      var selectedAccount = this._id;
+      //console.log("account_id: " + selectedUser + ", " + AccountList.findOne(selectedUser).userName);
+      if (confirm("Are you sure you want to remove account " + selectedAccount + "?")) {
+        Meteor.call('removeUser', selectedAccount);
       }
     }
   });
 
   Template.Admin.helpers({
-    user: function() {
+    account: function() {
       return AccountList.find();
       //return Meteor.call('users');
     }
@@ -226,8 +412,30 @@ if (Meteor.isClient) {
   //
   Template.showAccounts.helpers({
     user: function() {
+      return Meteor.users.find();
+      //return Meteor.call('users');
+    },
+    account: function() {
       return AccountList.find();
       //return Meteor.call('users');
+    },
+    /*
+    userName: function() {
+      var user = Meteor.users.findOne({_id: this.user_id});
+      //console.log("showAccounts userName: " + user.username);
+      return user.username;
+    },
+    */
+    'userName': function() {
+      var selectedAccount = this._id;
+      var user_id = AccountList.findOne(selectedAccount).user_id;
+      var user = Meteor.users.findOne({_id: user_id});
+//      console.log("1.showAccounts userName selectedAccount: " + selectedAccount);
+//      console.log("2.showAccounts userName user_id: " + user_id);
+      if (user) {
+//        console.log("3.showAccounts userName: " + user.username);
+        return user.username;
+      }
     },
     userBalance: function() {
       var userId = this._id;
@@ -242,11 +450,11 @@ if (Meteor.isClient) {
       }
 
     },
-    'selectedUser': function(){
+    'selectedAccount': function(){
       var userId = this._id;
-      var selectedUser = Session.get('selectedUser');
-      //console.log("Selected user: " + selectedUser + ", " + AccountList.findOne(selectedUser).userName);
-      if (userId == selectedUser) {
+      var selectedAccount = Session.get('selectedAccount');
+      //console.log("ShowAccounts accountId: " + selectedAccount);
+      if (userId == selectedAccount) {
         // return this class so CSS can highlight the selected player
         return "selected"
       }
@@ -258,17 +466,17 @@ if (Meteor.isClient) {
   });
 
   Template.showAccounts.events({
-    'click .user': function(event){
-      var userId = this._id;
-      Session.set('selectedUser', userId);
+    'click .account': function(event){
+      var accountId = this._id;
+      Session.set('selectedAccount', accountId);
     },
-    'mousedown .user': function(event){
-      var userId = this._id;
-      Session.set('selectedUser', userId);
+    'mousedown .account': function(event){
+      var accountId = this._id;
+      Session.set('selectedAccount', accountId);
     },
-    'touchstart .user': function(event){
-      var userId = this._id;
-      Session.set('selectedUser', userId);
+    'touchstart .account': function(event){
+      var accountId = this._id;
+      Session.set('selectedAccount', accountId);
     },
 
   });
@@ -278,13 +486,17 @@ if (Meteor.isClient) {
   //
   Template.Accounts.helpers({
     'showSelectedUser': function(){
-      var userId = this._id;
-      var selectedUser = Session.get('selectedUser');
-      //console.log("Selected user: " + selectedUser + ", " + AccountList.findOne(selectedUser).userName);
-      if (userId == selectedUser) {
-      }
-      //return Meteor.call('getUser', selectedUser);
-      return AccountList.findOne(selectedUser);
+      var selectedAccount = Session.get('selectedAccount');
+      return AccountList.findOne(selectedAccount);
+    },
+    'userName': function() {
+      var selectedAccount = Session.get('selectedAccount');
+      var user_id = AccountList.findOne(selectedAccount).user_id;
+      var user = Meteor.users.findOne({_id: user_id});
+      console.log("1.Accounts userName selectedAccount: " + selectedAccount);
+      console.log("2.Accounts userName user_id: " + user_id);
+      console.log("3.Accounts userName: " + user.username);
+      return user.username;
     },
   });
 
@@ -298,14 +510,14 @@ if (Meteor.isClient) {
     'click .void': function(){
       var transactionId = this._id;
 
-      var selectedUser = Session.get('selectedUser');
+      var selectedAccount = Session.get('selectedAccount');
 //      var amount = -Meteor.call('getTransaction', transactionId).amount;
       var amount = -(TransactionList.findOne(transactionId).amount);
       var creditOrDebit = (amount<0) ? "Debit " : "Credit ";
-      //console.log("id: " + selectedUser + " " + creditOrDebit + AccountList.findOne(selectedUser).userName + "'s account by " + amount );
+      console.log("trans id: " + transactionId + " id: " + selectedAccount + " " + creditOrDebit + Meteor.users.findOne(AccountList.findOne(selectedAccount).user_id).username + "'s account by " + amount );
 
       if (confirm("Are you sure you want to void this transaction?")) {
-        Meteor.call('voidTransaction', selectedUser, amount, transactionId);
+        Meteor.call('voidTransaction', selectedAccount, amount, transactionId);
         //Meteor.call('removeTransaction', transactionId);
       }
       Session.set('showVoided', true); // so user can confirm voided transaction
@@ -316,16 +528,22 @@ if (Meteor.isClient) {
     'click .toggleShowVoided': function(){
       Session.set('showVoided', !Session.get('showVoided'));
     },
+    'click .reactive-table tr': function(event) {
+      var transaction = this;
+      event.preventDefault();
+      console.log("Selected row: " + transaction._id);
+    },
   });
 
   Template.transactions.helpers({
     transactions: function() {
-      var selectedUser = Session.get('selectedUser');
+      var selectedAccount = Session.get('selectedAccount');
+      //console.log("transactions accountId: " + selectedAccount);
       if (Session.get('showVoided')) {
-        return TransactionList.find({user: selectedUser}, {sort: {date: 1}});
+        return TransactionList.find({account_id: selectedAccount}, {sort: {date: 1}});
       }
       else {
-        return TransactionList.find({user: selectedUser, void: {$ne: true}}, {sort: {date: 1}});
+        return TransactionList.find({account_id: selectedAccount, void: {$ne: true}}, {sort: {date: 1}});
       }
     },
     enableVoid: function() {
@@ -335,13 +553,28 @@ if (Meteor.isClient) {
       return Session.get('showVoided');
     },
     tableSettings : function () {
-      return {
-          fields: [
-            { key: 'date', label: 'Date', cellClass: 'col-md-1' },
-            { key: 'amount', label: 'Amount', cellClass: 'col-md-1' },
-            { key: 'description', label: 'Description', cellClass: 'col-md-10' }
-          ]
-      };
+      if (Session.get('enableVoid')) {
+        return {
+            fields: [
+              { key: 'date', label: 'Date', cellClass: 'col-md-1' },
+              { key: 'amount', label: 'Amount', cellClass: 'col-md-1' },
+              { key: 'description', label: 'Description', cellClass: 'col-md-9' },
+              { key: '_id', label: 'Void', fn: function(value) {
+                  return new Spacebars.SafeString('<button class="void btn btn-warning">Void ' + value + '</button>');
+                }, cellClass: 'col-md-1'
+              }
+            ]
+        };
+      }
+      else {
+        return {
+            fields: [
+              { key: 'date', label: 'Date', cellClass: 'col-md-1' },
+              { key: 'amount', label: 'Amount', cellClass: 'col-md-1' },
+              { key: 'description', label: 'Description', cellClass: 'col-md-10' }
+            ]
+        };
+      }
     },
   });
 
@@ -383,6 +616,10 @@ Router.route('/allocations', function () {
 
 Router.route('/recurring', function () {
   this.render('Recurring');
+});
+
+Router.route('/quicksetup', function () {
+  this.render('QuickSetup');
 });
 
 Router.route('/admin', function () {
