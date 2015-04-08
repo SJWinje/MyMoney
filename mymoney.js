@@ -54,11 +54,13 @@ if (Meteor.isServer) {
     'addUser': function(options, type){
       var user_id = Accounts.createUser(options);
       console.log("Meteor.addUser user_id: " + user_id);
+
       var accountId = AccountList.insert({
         user_id: user_id,
         type: type
       });
       console.log("Meteor.addUser accountId: " + accountId);
+      
       return {
         userId: user_id,
         accountId: accountId
